@@ -88,34 +88,28 @@ output = {
     'total':'',
     'otp':''
 }
-def upload():
+
+def block15(page,text_blocks):
     global output
     global filename
-    filename = askopenfilename() 
-    print(filename)
-    #window.config(title=filename)
-    
-    doc = fitz.open('{f}'.format(f=filename))
-    page = doc.load_page(0)
-    pix = page.get_pixmap()
-    pix.save("page-%i.png" % page.number)
-    
-    pix1 = fitz.Pixmap(pix, 0) if pix.alpha else pix  # PPM does not support transparency
-    imgdata = pix1.tobytes("ppm")  # extremely fast!
-    tkimg = PhotoImage(data = imgdata)
-    #tkimg = PhotoImage(file=r"page-%i.png" % page.number)
-    
-    if tkimg is not None:
-     view_image.configure(image=tkimg,text=filename,compound=BOTTOM)
-     view_image.image=tkimg
-     view_image.text=filename
-     view_image.compound = BOTTOM
-     
-    
-     text = page.get_text('words')
-     text_blocks = page.get_text('blocks')
-     coutt = 1
-     for i in text_blocks:
+    coutt = 1
+    output = {
+    'retailer_name':'',
+    'retailer_address':'',
+    'retailer_gstin':'',
+    'retailer_pan':'',
+    'invoice_number':'',
+    'invoice_date':'',
+    'description_of_services':'',
+    'sac':'',
+    'amount':'',
+    'cgst':'',
+    'sgst':'',
+    'igst':'',
+    'total':'',
+    'otp':''
+    }
+    for i in text_blocks:
       x = i[0]
       y = i[1]
       w = i[2]
@@ -180,12 +174,155 @@ def upload():
       image = cv2.putText(image, '{co}'.format(co=coutt), (int(x), int(y+20)), cv2.FONT_HERSHEY_SIMPLEX, 1.0, (36,255,12), 2)
       coutt = coutt+1
       cv2.imwrite(r"page-%i.png" % page.number, image)
-     print(output)
+      print(output)
+    cv2.imshow(r"page-%i.png" % page.number, image) 
+    pass
+
+def block12(page,text_blocks):
+    global output
+    global filename
+    coutt = 1
+    output = {
+    'retailer_name':'',
+    'retailer_address':'',
+    'retailer_gstin':'',
+    'retailer_pan':'',
+    'invoice_number':'',
+    'invoice_date':'',
+    'description_of_services':'',
+    'sac':'',
+    'amount':'',
+    'cgst':'',
+    'sgst':'',
+    'igst':'',
+    'total':'',
+    'otp':''
+    }
+    for i in text_blocks:
+      x = i[0]
+      y = i[1]
+      w = i[2]
+      h = i[3]
+      
+      
+      if i[5]==1:
+          retailer_info = i[4].split('\n')
+          
+          output['retailer_name'] = retailer_info[0]
+          total_length = len(retailer_info)
+          #output['retailer_gstin'] = retailer_info[total_length-3].replace("GSTIN:","").strip()
+          #output['retailer_pan'] = retailer_info[total_length-2].replace("PAN:","").strip()
+          output['retailer_address'] = "\n".join([retailer_info[m] for m in range(1,total_length-1)])
+      
+      if i[5]==2:
+          pan_info = i[4].split('\n')
+          output['retailer_pan'] = pan_info[0].replace("PAN:","").strip()
+            
+            
+      if i[5]==3:
+          id_info = i[4].split('\n')
+          if(len(id_info)<=3):
+              output['invoice_number']=id_info[0].replace("INVOICE NO:","")
+              output['invoice_date']=id_info[1].replace("Dated :","")
+          else:
+              output['invoice_number']=id_info[1].strip()
+              output['invoice_date']=id_info[2].replace("Dated :","").strip()
+                  
+      if i[5]==6:
+          ds_info = i[4].split('\n')
+          output['description_of_services']=ds_info[1].strip()
+          if len(ds_info) == 4:
+           #output['sac']=ds_info[2].strip()
+           output['amount']=ds_info[2].strip()
+          else: 
+           output['sac']=ds_info[2].strip()
+           output['amount']=ds_info[3].strip()
+                
+    #   if i[5]==6:
+    #       cgst = i[4].split('\n')
+    #       output['cgst']=cgst[1].strip()
+      
+    #   if i[5]==7:
+    #       sgst = i[4].split('\n')
+    #       output['sgst']=sgst[1].strip()
+      
+    #   if i[5]==8:
+    #       igst = i[4].split('\n')
+    #       output['igst']=igst[1].strip()
+      
+      if i[5]==7:
+          total = i[4].split('\n')
+          output['total']=total[1].strip()
+          
+          #print(output)       
+      
+      if i[5]==11:
+          otp = i[4].split('\n')
+          output['otp']=otp[1].replace("OTP:","").strip()
+          
+          
+          
+         
+              
+      
+     
+      image = cv2.imread(r"page-%i.png" % page.number)
+      
+      start_point = (int(x),int( y))
+      end_point = (int(w), int(h))
+      color = (255, 0, 0)
+      thickness = 2
+      image = cv2.rectangle(image, start_point, end_point, color, thickness)
+      image = cv2.putText(image, '{co}'.format(co=coutt), (int(x), int(y+20)), cv2.FONT_HERSHEY_SIMPLEX, 1.0, (36,255,12), 2)
+      coutt = coutt+1
+      cv2.imwrite(r"page-%i.png" % page.number, image)
+    cv2.imshow(r"page-%i.png" % page.number, image) 
+    pass
+
+
+def upload():
+    global output
+    global filename
+    filename = askopenfilename() 
+    print(filename)
+    #window.config(title=filename)
+    
+    doc = fitz.open('{f}'.format(f=filename))
+    page = doc.load_page(0)
+    pix = page.get_pixmap()
+    pix.save("page-%i.png" % page.number)
+    
+    pix1 = fitz.Pixmap(pix, 0) if pix.alpha else pix  # PPM does not support transparency
+    imgdata = pix1.tobytes("ppm")  # extremely fast!
+    tkimg = PhotoImage(data = imgdata)
+    #tkimg = PhotoImage(file=r"page-%i.png" % page.number)
+    
+    if tkimg is not None:
+     view_image.configure(image=tkimg,text=filename,compound=BOTTOM)
+     view_image.image=tkimg
+     view_image.text=filename
+     view_image.compound = BOTTOM
+     
+    
+     text = page.get_text('words')
+     text_blocks = page.get_text('blocks')
+    
+     block_data_len = len(text_blocks)
+     
+     print("=========={l}".format(l=block_data_len))
+     
+     if block_data_len == 15:
+         block15(page=page,text_blocks=text_blocks)
+     elif  block_data_len == 12:
+         block12(page=page,text_blocks=text_blocks)
+        
+     
+     #print(output)
      text = json.dumps(output, indent=2)
      view_text.configure(text=text)
      view_text.text=text
      
-    cv2.imshow(r"page-%i.png" % page.number, image) 
+    
     # view_image.configure(image=image,text=filename,compound=BOTTOM)
     # view_image.image=image
     # view_image.text=filename
